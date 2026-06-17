@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="BBB 5/3/1" />
+  <meta name="theme-color" content="#111214" />
+  <title>BBB 5/3/1</title>
+
+  <!-- PWA Manifest inline via JS blob -->
+  <script>
+    const manifest = {
+      name: "Boring But Big 5/3/1",
+      short_name: "BBB 5/3/1",
+      start_url: ".",
+      display: "standalone",
+      background_color: "#111214",
+      theme_color: "#111214",
+      icons: [{
+        src: "data:image/svg+xml," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23111214'/><text y='62' x='50' text-anchor='middle' font-size='42' font-family='monospace' font-weight='bold' fill='%23f5a623'>531</text></svg>`),
+        sizes: "192x192", type: "image/svg+xml"
+      }]
+    };
+    const blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+    const link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = URL.createObjectURL(blob);
+    document.head.appendChild(link);
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #111214;
+      --surface: #1a1c1f;
+      --surface2: #22252a;
+      --border: #2e3138;
+      --amber: #f5a623;
+      --amber-dim: #3d2a0a;
+      --amber-mid: #7a5210;
+      --text: #e8e9eb;
+      --muted: #6b7280;
+      --green: #4ade80;
+      --red: #f87171;
+      --font-head: 'Space Grotesk', sans-serif;
+      --font-mono: 'Space Mono', monospace;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bot: env(safe-area-inset-bottom, 0px);
+    }
+
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-head);
+      display: flex;
+      flex-direction: column;
+      padding-top: var(--safe-top);
+    }
+
+    /* ── Layout shells ── */
+    #app { display: flex; flex-direction: column; height: 100%; }
+
+    .header {
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+    .logo { font-size: 10px; font-family: var(--font-mono); color: var(--amber); letter-spacing: 3px; }
+    .title { font-size: 20px; font-weight: 700; letter-spacing: -0.4px; }
+    .cycle-badge {
+      font-family: var(--font-mono); font-size: 11px;
+      background: var(--amber-dim); color: var(--amber);
+      padding: 3px 9px; border-radius: 4px;
+    }
+
+    /* ── Wave ring ── */
+    .wave-row {
+      display: flex; align-items: center; gap: 16px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .wave-ring { position: relative; width: 76px; height: 76px; flex-shrink: 0; }
+    .wave-ring svg { transform: rotate(-90deg); }
+    .wave-center {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    .wave-num { font-family: var(--font-mono); font-size: 22px; font-weight: 700; color: var(--amber); line-height: 1; }
+    .wave-lbl { font-size: 8px; color: var(--muted); letter-spacing: 1.5px; margin-top: 2px; }
+    .wave-info-title { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+    .wave-info-sub { font-size: 12px; color: var(--muted); }
+
+    /* ── Nav ── */
+    .nav {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .nav-tab {
+      flex: 1; padding: 11px 4px;
+      font-size: 12px; font-weight: 500;
+      color: var(--muted); background: none; border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer; text-align: center;
+      font-family: var(--font-head);
+      transition: color .15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .nav-tab.active { color: var(--amber); border-bottom-color: var(--amber); }
+
+    /* ── Scrollable content ── */
+    .content {
+      flex: 1; overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: calc(20px + var(--safe-bot));
+    }
+
+    .section { padding: 18px 20px; }
+    .sec-label {
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 12px;
+      font-family: var(--font-mono);
+    }
+
+    /* ── Lift selector ── */
+    .lift-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 20px; }
+    .lift-btn {
+      padding: 11px 4px; font-size: 12px; font-family: var(--font-mono); font-weight: 700;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--muted); cursor: pointer;
+      transition: all .12s; letter-spacing: 1px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .lift-btn.active { background: var(--amber-dim); border-color: var(--amber); color: var(--amber); }
+
+    /* ── Set table ── */
+    .set-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    .set-table th {
+      font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--muted); font-family: var(--font-mono);
+      text-align: left; padding: 0 10px 10px; font-weight: 400;
+    }
+    .set-table td { padding: 11px 10px; font-family: var(--font-mono); font-size: 14px; }
+    .set-row td { background: var(--surface); border-top: 1px solid var(--border); }
+    .set-row:first-of-type td:first-child { border-radius: 8px 0 0 0; }
+    .set-row:first-of-type td:last-child { border-radius: 0 8px 0 0; }
+    .set-row:last-of-type td:first-child { border-radius: 0 0 0 8px; }
+    .set-row:last-of-type td:last-child { border-radius: 0 0 8px 0; }
+    .w-big { font-size: 18px; font-weight: 700; }
+    .w-unit { font-size: 11px; color: var(--muted); margin-left: 2px; }
+    .rep-pill {
+      display: inline-block; background: var(--amber-dim); color: var(--amber);
+      padding: 3px 9px; border-radius: 20px; font-size: 12px; font-weight: 700;
+    }
+    .muted { color: var(--muted); }
+
+    /* ── BBB block ── */
+    .bbb-block {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px; margin-bottom: 20px;
+    }
+    .bbb-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; gap: 8px; }
+    .bbb-title { font-size: 13px; font-weight: 700; }
+    .bbb-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .bbb-pcts { display: flex; gap: 5px; flex-shrink: 0; }
+    .pct-btn {
+      font-size: 11px; font-family: var(--font-mono); padding: 4px 9px;
+      border-radius: 5px; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--muted); cursor: pointer; transition: all .12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .pct-btn.active { border-color: var(--amber); color: var(--amber); background: var(--amber-dim); }
+    .bbb-sets-row { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+    .bbb-chip {
+      flex-shrink: 0; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 12px; font-family: var(--font-mono); font-size: 13px;
+    }
+    .bbb-chip-lbl { font-size: 9px; color: var(--muted); letter-spacing: 1px; display: block; margin-bottom: 3px; }
+
+    /* ── Log btn ── */
+    .log-btn {
+      width: 100%; padding: 15px; background: var(--amber); color: #111;
+      font-family: var(--font-head); font-size: 15px; font-weight: 700;
+      border: none; border-radius: 10px; cursor: pointer;
+      letter-spacing: 0.2px; transition: opacity .15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .log-btn:active { opacity: 0.8; }
+    .log-btn.done { background: var(--surface2); color: var(--green); border: 1px solid var(--green); }
+    .log-btn:disabled { opacity: 0.45; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: calc(80px + var(--safe-bot)); left: 50%; transform: translateX(-50%);
+      background: var(--green); color: #111; font-weight: 700; font-size: 13px;
+      padding: 10px 20px; border-radius: 20px; pointer-events: none;
+      opacity: 0; transition: opacity .2s; white-space: nowrap; z-index: 999;
+    }
+    .toast.show { opacity: 1; }
+
+    /* ── Settings ── */
+    .settings-list { display: flex; flex-direction: column; gap: 10px; }
+    .setting-card {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 16px; gap: 12px;
+    }
+    .setting-name { font-size: 14px; font-weight: 600; }
+    .setting-hint { font-size: 11px; color: var(--muted); margin-top: 3px; }
+    .tm-input {
+      font-family: var(--font-mono); font-size: 18px; font-weight: 700;
+      width: 78px; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 7px; color: var(--amber); padding: 6px 10px; text-align: right;
+    }
+    .tm-input:focus { outline: none; border-color: var(--amber); }
+    .stepper { display: flex; align-items: center; gap: 10px; }
+    .stepper-val { font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--amber); min-width: 36px; text-align: center; }
+    .step-btn {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); cursor: pointer; font-size: 18px;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color .12s; -webkit-tap-highlight-color: transparent;
+    }
+    .step-btn:active { border-color: var(--amber); color: var(--amber); }
+    .unit-row { display: flex; border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
+    .unit-opt {
+      flex: 1; padding: 7px; font-size: 12px; font-family: var(--font-mono);
+      background: none; border: none; color: var(--muted); cursor: pointer; text-align: center;
+    }
+    .unit-opt.active { background: var(--amber-dim); color: var(--amber); }
+
+    /* ── Log history ── */
+    .log-empty { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+    .log-entry {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 16px; margin-bottom: 10px;
+    }
+    .log-entry-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .log-lift-name { font-size: 15px; font-weight: 700; }
+    .log-right { display: flex; align-items: center; gap: 10px; }
+    .log-date { font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
+    .del-btn {
+      background: none; border: none; color: var(--muted);
+      cursor: pointer; font-size: 18px; line-height: 1; padding: 0 2px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .del-btn:active { color: var(--red); }
+    .log-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+    .tag {
+      font-size: 11px; font-family: var(--font-mono);
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--muted); padding: 3px 8px; border-radius: 4px;
+    }
+    .tag.hi { border-color: var(--amber-mid); color: var(--amber); }
+
+    /* ── Progress ── */
+    .prog-lift { margin-bottom: 24px; }
+    .prog-lift-head {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 700; margin-bottom: 10px;
+    }
+    .tm-pill {
+      font-family: var(--font-mono); font-size: 11px;
+      background: var(--amber-dim); color: var(--amber);
+      padding: 2px 8px; border-radius: 20px;
+    }
+    .sessions-pill {
+      font-size: 11px; color: var(--muted); margin-left: auto;
+    }
+    .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
+    .bar-lbl { font-size: 10px; font-family: var(--font-mono); color: var(--muted); width: 46px; text-align: right; }
+    .bar-track { flex: 1; height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+    .bar-fill { height: 100%; background: var(--amber); border-radius: 3px; transition: width .4s ease; }
+    .bar-val { font-family: var(--font-mono); font-size: 11px; color: var(--text); width: 40px; }
+
+    /* ── Divider ── */
+    .divider { height: 1px; background: var(--border); margin: 4px 0 16px; }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ─── Data ────────────────────────────────────────────────────────────────────
+const LIFTS = ['Squat','Bench','Deadlift','OHP'];
+const ABBR  = {Squat:'SQ', Bench:'BP', Deadlift:'DL', OHP:'OHP'};
+
+const WEEKS = [
+  { label:'Week 1 — 5s', short:'5s Week',
+    sets:[{p:.65,r:5},{p:.75,r:5},{p:.85,r:'5+'}] },
+  { label:'Week 2 — 3s', short:'3s Week',
+    sets:[{p:.70,r:3},{p:.80,r:3},{p:.90,r:'3+'}] },
+  { label:'Week 3 — 1s', short:'1s Week',
+    sets:[{p:.75,r:5},{p:.85,r:3},{p:.95,r:'1+'}] },
+  { label:'Week 4 — Deload', short:'Deload',
+    sets:[{p:.40,r:5},{p:.50,r:5},{p:.60,r:5}] },
+];
+
+const BBB_OPTS = [{label:'50%',pct:.50},{label:'60%',pct:.60},{label:'70%',pct:.70}];
+
+const r5 = n => Math.round(n/5)*5;
+
+// ─── State ───────────────────────────────────────────────────────────────────
+const ls = {
+  get: (k,d) => { try { const v=localStorage.getItem(k); return v?JSON.parse(v):d; } catch{return d;} },
+  set: (k,v) => { try { localStorage.setItem(k,JSON.stringify(v)); } catch{} }
+};
+
+let state = {
+  tab: 'workout',
+  weekIdx: ls.get('bbb_week', 0),
+  cycle:   ls.get('bbb_cycle', 1),
+  tm:      ls.get('bbb_tm', {Squat:225, Bench:185, Deadlift:275, OHP:135}),
+  unit:    ls.get('bbb_unit', 'lbs'),
+  log:     ls.get('bbb_log', []),
+  lift:    'Squat',
+  bbbPct:  .60,
+};
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+const fmtDate = d => {
+  const D = new Date(d);
+  return D.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+};
+const today = () => new Date().toISOString().split('T')[0];
+
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) { t = document.createElement('div'); t.id='toast'; t.className='toast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ─── Render ──────────────────────────────────────────────────────────────────
+function render() {
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+
+  // Header
+  const header = el('div','header');
+  const ht = el('div','header-top');
+  ht.appendChild(span('logo','5/3/1 BBB'));
+  ht.appendChild(span('cycle-badge',`Cycle ${state.cycle}`));
+  header.appendChild(ht);
+  header.appendChild(span('title','Boring But Big'));
+  app.appendChild(header);
+
+  // Wave ring
+  app.appendChild(renderWave());
+
+  // Nav
+  app.appendChild(renderNav());
+
+  // Content
+  const content = el('div','content');
+  if      (state.tab==='workout')  content.appendChild(renderWorkout());
+  else if (state.tab==='log')      content.appendChild(renderLog());
+  else if (state.tab==='progress') content.appendChild(renderProgress());
+  else if (state.tab==='settings') content.appendChild(renderSettings());
+  app.appendChild(content);
+
+  // Toast
+  const toast = el('div','toast'); toast.id='toast'; app.appendChild(toast);
+}
+
+function renderWave() {
+  const wi = state.weekIdx;
+  const week = WEEKS[wi];
+  const r=33, circ=2*Math.PI*r;
+  const fill = circ*((wi+1)/4);
+
+  const row = el('div','wave-row');
+
+  const ring = el('div','wave-ring');
+  ring.innerHTML = `
+    <svg width="76" height="76" viewBox="0 0 76 76">
+      <circle cx="38" cy="38" r="${r}" fill="none" stroke="#2e3138" stroke-width="6"/>
+      <circle cx="38" cy="38" r="${r}" fill="none" stroke="#f5a623" stroke-width="6"
+        stroke-dasharray="${fill} ${circ}" stroke-linecap="round"/>
+    </svg>
+    <div class="wave-center">
+      <div class="wave-num">W${wi+1}</div>
+      <div class="wave-lbl">OF 4</div>
+    </div>`;
+  row.appendChild(ring);
+
+  const info = el('div');
+  info.appendChild(span('wave-info-title', week.label));
+  const sub = wi < 3
+    ? `Top set: ${Math.round(week.sets[2].p*100)}% × ${week.sets[2].r}`
+    : 'Active recovery — lighter weights';
+  info.appendChild(span('wave-info-sub', sub));
+  row.appendChild(info);
+  return row;
+}
+
+function renderNav() {
+  const nav = el('div','nav');
+  [['workout','Workout'],['log','Log'],['progress','Progress'],['settings','Settings']].forEach(([id,label]) => {
+    const btn = el('button', 'nav-tab' + (state.tab===id?' active':''));
+    btn.textContent = label;
+    btn.onclick = () => { state.tab=id; render(); };
+    nav.appendChild(btn);
+  });
+  return nav;
+}
+
+// ── Workout tab ───────────────────────────────────────────────────────────────
+function renderWorkout() {
+  const sec = el('div','section');
+  const wi = state.weekIdx;
+  const week = WEEKS[wi];
+  const tm = state.tm[state.lift];
+  const u = state.unit;
+
+  // Lift selector
+  sec.appendChild(span('sec-label','Select Lift'));
+  const grid = el('div','lift-grid');
+  LIFTS.forEach(l => {
+    const b = el('button','lift-btn'+(state.lift===l?' active':''));
+    b.textContent = ABBR[l];
+    b.onclick = () => { state.lift=l; render(); };
+    grid.appendChild(b);
+  });
+  sec.appendChild(grid);
+
+  // Main sets
+  const mainLabel = `Main Work — ${state.lift} (TM: ${tm} ${u})`;
+  sec.appendChild(span('sec-label', mainLabel));
+
+  const tbl = document.createElement('table');
+  tbl.className = 'set-table';
+  tbl.innerHTML = `<thead><tr>
+    <th>Set</th><th>%</th><th>Weight</th><th>Reps</th>
+  </tr></thead>`;
+  const tbody = document.createElement('tbody');
+  week.sets.forEach((s,i) => {
+    const w = r5(s.p*tm);
+    const tr = document.createElement('tr');
+    tr.className = 'set-row';
+    tr.innerHTML = `
+      <td class="muted">${i+1}</td>
+      <td class="muted">${Math.round(s.p*100)}%</td>
+      <td><span class="w-big">${w}</span><span class="w-unit">${u}</span></td>
+      <td><span class="rep-pill">${s.r}</span></td>`;
+    tbody.appendChild(tr);
+  });
+  tbl.appendChild(tbody);
+  sec.appendChild(tbl);
+
+  // BBB block (not on deload)
+  if (wi < 3) {
+    sec.appendChild(span('sec-label','BBB Assistance'));
+    const bbb = el('div','bbb-block');
+    const bh = el('div','bbb-header');
+    const bl = el('div');
+    bl.appendChild(span('bbb-title', `${state.lift} — 5 × 10`));
+    bl.appendChild(span('bbb-sub', `${r5(state.bbbPct*tm)} ${u} per set`));
+    bh.appendChild(bl);
+    const pcts = el('div','bbb-pcts');
+    BBB_OPTS.forEach(o => {
+      const b = el('button','pct-btn'+(state.bbbPct===o.pct?' active':''));
+      b.textContent = o.label;
+      b.onclick = () => { state.bbbPct=o.pct; render(); };
+      pcts.appendChild(b);
+    });
+    bh.appendChild(pcts);
+    bbb.appendChild(bh);
+
+    const chips = el('div','bbb-sets-row');
+    for (let n=1;n<=5;n++) {
+      const chip = el('div','bbb-chip');
+      chip.innerHTML = `<span class="bbb-chip-lbl">SET ${n}</span>${r5(state.bbbPct*tm)} <span style="font-size:10px;color:var(--muted)">${u} × 10</span>`;
+      chips.appendChild(chip);
+    }
+    bbb.appendChild(chips);
+    sec.appendChild(bbb);
+  }
+
+  // Log button
+  const tdStr = today();
+  const alreadyLogged = state.log.some(e =>
+    e.lift===state.lift && e.date===tdStr && e.cycle===state.cycle && e.weekIdx===wi
+  );
+  const lb = el('button','log-btn'+(alreadyLogged?' done':''));
+  lb.textContent = alreadyLogged ? '✓ Logged Today' : `Log ${state.lift} Workout`;
+  lb.disabled = alreadyLogged;
+  lb.onclick = () => {
+    const entry = {
+      id: Date.now(),
+      lift: state.lift,
+      date: tdStr,
+      cycle: state.cycle,
+      weekIdx: wi,
+      weekLabel: week.label,
+      topWeight: r5(week.sets[2].p * tm),
+      topReps: week.sets[2].r,
+      bbbWeight: wi<3 ? r5(state.bbbPct*tm) : null,
+      bbbPct: state.bbbPct,
+      unit: state.unit,
+    };
+    state.log = [entry, ...state.log];
+    ls.set('bbb_log', state.log);
+    showToast('Workout logged ✓');
+    render();
+  };
+  sec.appendChild(lb);
+  return sec;
+}
+
+// ── Log tab ───────────────────────────────────────────────────────────────────
+function renderLog() {
+  const sec = el('div','section');
+
+  if (!state.log.length) {
+    const empty = el('div','log-empty');
+    empty.innerHTML = '<div style="font-size:36px;margin-bottom:12px">🏋️</div>No workouts logged yet.<br>Complete your first session to start your history.';
+    sec.appendChild(empty);
+    return sec;
+  }
+
+  sec.appendChild(span('sec-label', `${state.log.length} session${state.log.length!==1?'s':''} logged`));
+
+  // Group by month
+  const groups = {};
+  state.log.forEach(e => {
+    const month = new Date(e.date+'T12:00:00').toLocaleDateString('en-US',{month:'long',year:'numeric'});
+    if (!groups[month]) groups[month] = [];
+    groups[month].push(e);
+  });
+
+  Object.entries(groups).forEach(([month, entries]) => {
+    const mh = el('div');
+    mh.style.cssText = 'font-size:11px;font-family:var(--font-mono);color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin:0 0 10px';
+    mh.textContent = month;
+    sec.appendChild(mh);
+
+    entries.forEach(e => {
+      const card = el('div','log-entry');
+      const top = el('div','log-entry-top');
+      top.appendChild(span('log-lift-name', e.lift));
+      const right = el('div','log-right');
+      right.appendChild(span('log-date', fmtDate(e.date+'T12:00:00')));
+      const del = el('button','del-btn');
+      del.textContent = '×';
+      del.onclick = () => {
+        state.log = state.log.filter(x=>x.id!==e.id);
+        ls.set('bbb_log', state.log);
+        render();
+      };
+      right.appendChild(del);
+      top.appendChild(right);
+      card.appendChild(top);
+
+      const tags = el('div','log-tags');
+      const mkTag = (txt,hi) => { const t=el('span','tag'+(hi?' hi':'')); t.textContent=txt; return t; };
+      tags.appendChild(mkTag(`Cycle ${e.cycle}`));
+      tags.appendChild(mkTag(e.weekLabel));
+      tags.appendChild(mkTag(`${e.topWeight}${e.unit} × ${e.topReps}`, true));
+      if (e.bbbWeight) tags.appendChild(mkTag(`BBB ${e.bbbWeight}${e.unit}`));
+      card.appendChild(tags);
+      sec.appendChild(card);
+    });
+
+    sec.appendChild(el('div','divider'));
+  });
+
+  return sec;
+}
+
+// ── Progress tab ──────────────────────────────────────────────────────────────
+function renderProgress() {
+  const sec = el('div','section');
+  sec.appendChild(span('sec-label','Training Maxes & Working Weights'));
+
+  const maxTM = Math.max(...Object.values(state.tm));
+
+  LIFTS.forEach(lift => {
+    const tm = state.tm[lift];
+    const count = state.log.filter(e=>e.lift===lift).length;
+    const div = el('div','prog-lift');
+
+    const head = el('div','prog-lift-head');
+    head.appendChild(span('', lift));
+    const pill = el('span','tm-pill'); pill.textContent=`${tm} ${state.unit} TM`; head.appendChild(pill);
+    const sc = el('span','sessions-pill'); sc.textContent=`${count} session${count!==1?'s':''}`; head.appendChild(sc);
+    div.appendChild(head);
+
+    [{lbl:'65% W1',p:.65},{lbl:'75% W1',p:.75},{lbl:'85% W1',p:.85},
+     {lbl:'90% W2',p:.90},{lbl:'95% W3',p:.95},{lbl:'BBB 60%',p:.60}].forEach(({lbl,p}) => {
+      const w = r5(p*tm);
+      const row = el('div','bar-row');
+      const bl = el('div','bar-lbl'); bl.textContent=lbl; row.appendChild(bl);
+      const track = el('div','bar-track');
+      const fill = el('div','bar-fill');
+      fill.style.width = `${Math.min(100,(w/(maxTM*0.97))*100)}%`;
+      track.appendChild(fill); row.appendChild(track);
+      const bv = el('div','bar-val'); bv.textContent=w; row.appendChild(bv);
+      div.appendChild(row);
+    });
+
+    sec.appendChild(div);
+  });
+
+  return sec;
+}
+
+// ── Settings tab ──────────────────────────────────────────────────────────────
+function renderSettings() {
+  const sec = el('div','section');
+
+  sec.appendChild(span('sec-label','Program Position'));
+  const list1 = el('div','settings-list');
+
+  // Cycle
+  list1.appendChild(makeStepCard('Cycle', `Increment after completing all 4 weeks`, state.cycle,
+    v => { state.cycle = Math.max(1,v); ls.set('bbb_cycle',state.cycle); render(); }
+  ));
+
+  // Week
+  list1.appendChild(makeStepCard(`Week (${WEEKS[state.weekIdx].short})`, 'Advance after completing each week', state.weekIdx+1,
+    v => { state.weekIdx = Math.max(0,Math.min(3,v-1)); ls.set('bbb_week',state.weekIdx); render(); }
+  , 1, 4));
+
+  sec.appendChild(list1);
+  sec.appendChild(Object.assign(el('div'),{style:'height:20px'}));
+
+  sec.appendChild(span('sec-label','Training Maxes (TM = 90% of your true 1RM)'));
+  const list2 = el('div','settings-list');
+
+  LIFTS.forEach(lift => {
+    const card = el('div','setting-card');
+    const left = el('div');
+    left.appendChild(span('setting-name', lift));
+    const hint = `Week 3 top: ${r5(.95*state.tm[lift])} ${state.unit}`;
+    left.appendChild(span('setting-hint', hint));
+    card.appendChild(left);
+
+    const inp = document.createElement('input');
+    inp.type='number'; inp.step=5; inp.className='tm-input';
+    inp.value = state.tm[lift];
+    inp.oninput = () => {
+      const n = parseInt(inp.value);
+      if (!isNaN(n) && n>0) {
+        state.tm[lift] = n;
+        ls.set('bbb_tm', state.tm);
+        // update hint live
+        left.children[1].textContent = `Week 3 top: ${r5(.95*n)} ${state.unit}`;
+      }
+    };
+    card.appendChild(inp);
+    list2.appendChild(card);
+  });
+
+  sec.appendChild(list2);
+  sec.appendChild(Object.assign(el('div'),{style:'height:20px'}));
+
+  sec.appendChild(span('sec-label','Unit'));
+  const list3 = el('div','settings-list');
+  const ucard = el('div','setting-card');
+  ucard.appendChild(span('setting-name','Weight Unit'));
+  const utog = el('div','unit-row');
+  ['lbs','kg'].forEach(u => {
+    const b = el('button','unit-opt'+(state.unit===u?' active':''));
+    b.textContent=u;
+    b.onclick=()=>{ state.unit=u; ls.set('bbb_unit',u); render(); };
+    utog.appendChild(b);
+  });
+  ucard.appendChild(utog);
+  list3.appendChild(ucard);
+  sec.appendChild(list3);
+  sec.appendChild(Object.assign(el('div'),{style:'height:20px'}));
+
+  // Export / import
+  sec.appendChild(span('sec-label','Data'));
+  const list4 = el('div','settings-list');
+
+  const expCard = el('div','setting-card');
+  expCard.appendChild(span('setting-name','Export Log'));
+  expCard.children[0].appendChild(Object.assign(span('setting-hint','Download your full history as JSON'),{}));
+  const expBtn = el('button','pct-btn active');
+  expBtn.textContent = 'Export';
+  expBtn.style.cssText='padding:8px 16px;font-size:12px';
+  expBtn.onclick = () => {
+    const data = JSON.stringify({tm:state.tm,log:state.log,cycle:state.cycle,weekIdx:state.weekIdx}, null, 2);
+    const blob = new Blob([data],{type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `bbb531-export-${today()}.json`;
+    a.click();
+  };
+  expCard.appendChild(expBtn);
+  list4.appendChild(expCard);
+
+  sec.appendChild(list4);
+
+  return sec;
+}
+
+function makeStepCard(name, hint, val, onChange, min=1, max=99) {
+  const card = el('div','setting-card');
+  const left = el('div');
+  left.appendChild(span('setting-name', name));
+  left.appendChild(span('setting-hint', hint));
+  card.appendChild(left);
+  const stepper = el('div','stepper');
+  const minus = el('button','step-btn'); minus.textContent='−';
+  minus.onclick=()=>onChange(val-1 < min ? min : val-1);
+  const numEl = el('div','stepper-val'); numEl.textContent=val;
+  const plus = el('button','step-btn'); plus.textContent='+';
+  plus.onclick=()=>onChange(val+1 > max ? max : val+1);
+  stepper.append(minus, numEl, plus);
+  card.appendChild(stepper);
+  return card;
+}
+
+// ─── DOM utils ───────────────────────────────────────────────────────────────
+function el(tag, cls='') {
+  const e = document.createElement(tag||'div');
+  if (cls) e.className = cls;
+  return e;
+}
+function span(cls, text='') {
+  const s = document.createElement('span');
+  if (cls) s.className = cls;
+  s.textContent = text;
+  return s;
+}
+
+// ─── Service Worker ───────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE = 'bbb531-v1';
+    const ASSETS = [self.location.href];
+    self.addEventListener('install', e => e.waitUntil(
+      caches.open(CACHE).then(c => c.addAll(ASSETS))
+    ));
+    self.addEventListener('fetch', e => e.respondWith(
+      caches.match(e.request).then(r => r || fetch(e.request))
+    ));
+  `;
+  const swBlob = new Blob([swCode], {type:'text/javascript'});
+  const swUrl = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swUrl).catch(()=>{});
+}
+
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
