@@ -935,4 +935,96 @@ if (!data) {
   t.textColor = new Color("#f5a623");
   t.font = Font.boldMonospacedSystemFont(16);
   w.addSpacer(4);
-  const s = w.a
+  const s = w.addText("Open app to sync");
+  s.textColor = new Color("#6b7280");
+  s.font = Font.systemFont(11);
+} else {
+  // Header row
+  const topRow = w.addStack();
+  topRow.layoutHorizontally();
+  topRow.centerAlignContent();
+
+  const titleTxt = topRow.addText("BBB 5/3/1");
+  titleTxt.textColor = new Color("#f5a623");
+  titleTxt.font = Font.boldMonospacedSystemFont(13);
+
+  topRow.addSpacer();
+
+  const cycleTxt = topRow.addText("C" + data.cycle + " W" + data.week);
+  cycleTxt.textColor = new Color("#7a5210");
+  cycleTxt.font = Font.boldMonospacedSystemFont(11);
+
+  w.addSpacer(6);
+
+  // Week label
+  const wl = w.addText(data.weekLabel.toUpperCase());
+  wl.textColor = new Color("#6b7280");
+  wl.font = Font.semiboldMonospacedSystemFont(9);
+
+  w.addSpacer(8);
+
+  // Lift name
+  const liftTxt = w.addText(data.lift);
+  liftTxt.textColor = new Color("#e8e9eb");
+  liftTxt.font = Font.boldSystemFont(18);
+
+  w.addSpacer(4);
+
+  // Top set
+  const topSet = w.addStack();
+  topSet.layoutHorizontally();
+  topSet.centerAlignContent();
+
+  const topLbl = topSet.addText("TOP SET  ");
+  topLbl.textColor = new Color("#6b7280");
+  topLbl.font = Font.semiboldMonospacedSystemFont(10);
+
+  const topVal = topSet.addText(data.topWeight + data.unit + " × " + data.topReps);
+  topVal.textColor = new Color("#f5a623");
+  topVal.font = Font.boldMonospacedSystemFont(13);
+
+  w.addSpacer(3);
+
+  // BBB
+  const bbbRow = w.addStack();
+  bbbRow.layoutHorizontally();
+  bbbRow.centerAlignContent();
+
+  const bbbLiftName = data.bbbLift ? data.bbbLift : data.lift;
+  const bbbLbl = bbbRow.addText(bbbLiftName.toUpperCase() + " BBB  ");
+  bbbLbl.textColor = new Color("#6b7280");
+  bbbLbl.font = Font.semiboldMonospacedSystemFont(10);
+
+  const bbbVal = bbbRow.addText(data.bbbWeight + data.unit);
+  bbbVal.textColor = new Color("#e8e9eb");
+  bbbVal.font = Font.boldMonospacedSystemFont(13);
+
+  w.addSpacer(6);
+
+  // Last sync
+  if (data.lastSync) {
+    const syncDate = new Date(data.lastSync);
+    const syncStr = syncDate.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + 
+                    ' ' + syncDate.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    const syncTxt = w.addText("synced " + syncStr);
+    syncTxt.textColor = new Color("#3d3d3d");
+    syncTxt.font = Font.systemFont(9);
+  }
+}
+
+Script.setWidget(w);
+Script.complete();
+`;
+}
+
+// ─── Offline Support registration ────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  const sw = `const C='bbb531-v3';self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll([self.location.href]))));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))))`;
+  const blob = new Blob([sw], {type: 'text/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+}
+
+render();
+</script>
+</body>
+</html>
